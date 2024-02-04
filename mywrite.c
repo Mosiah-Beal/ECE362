@@ -4,7 +4,7 @@
 #include <signal.h>
 
 int setexit=0;
-char *filename = "mywrite.txt";
+char *filename = "mywrite.txt";		// File name to write to // Unneeded if using append mode
 
 void sigintHandler(int sig_num)
 {
@@ -16,9 +16,10 @@ void sigintHandler(int sig_num)
 int main()
 {
 	FILE *fileptr;
+
+	// Seemingly unused variables, future homework?
 	char id[30];
 	char name [47];
-
 	char amt[50];
 
     signal(SIGINT, sigintHandler);
@@ -40,7 +41,7 @@ int main()
 
     while(1) {
 		if(setexit) {
-			// Close the file
+			// Close the file if user presses Ctrl-C
 			fclose(fileptr);
 			printf("File closed successfully\n");
 			break;
@@ -48,7 +49,7 @@ int main()
 
 		printf("Enter string- Cntrl-C to exit \n");
 
-		char *input = malloc(sizeof(char) * 100);	// Allocate memory for the input string
+		char *input = malloc(sizeof(char) * 100);	// Allocate memory for the input string, 100 characters seems reasonable
 		fgets(input, 100, stdin);	// Get the input from terminal until the user presses Ctrl-C
 
 		// Parse the input string and append null character at the newline character
@@ -63,7 +64,7 @@ int main()
 		
 	}
 
-	// Close the file
+	// Close the file (if it is not already closed)
 	fclose(fileptr);
 
     return 0;

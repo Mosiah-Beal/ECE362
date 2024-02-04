@@ -15,8 +15,9 @@ void sigintHandler(int sig_num)
 
 int main()
 {
-	FILE *fileptr;
+	FILE *fileptr;	// Unused since I am using printf to print the input to the terminal
 
+	// Seemingly unused variables, future homework?
 	char id[30];
 	char name [47];
 	char amt[50];
@@ -31,7 +32,7 @@ int main()
 
 		printf("Enter string - Cntrl-C to exit: \n");
 
-		char *input = malloc(sizeof(char) * 100);	// Allocate memory for the input string
+		char *input = malloc(sizeof(char) * 100);	// Allocate memory for the input string, 100 characters seems reasonable
 		fgets(input, 100, stdin);	// Get the input from terminal until the user presses Ctrl-C
 
 		// Parse the input string and append null character at the newline character
