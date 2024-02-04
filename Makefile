@@ -8,10 +8,13 @@
 	gcc -c $< -o $@
 
 
-all: mywrite myterminalwrite
+# Targets for the executables
+TARGETS = mywrite myterminalwrite
+
+all: $(TARGETS)
 
 clean:
-	rm -f mywrite myterminalwrite mywrite.txt *.o
+	rm -f $(TARGETS) mywrite.txt *.o
 
 # Also make sure that the .txt file exists before running mywrite
 mywrite: mywrite.o
@@ -20,5 +23,6 @@ mywrite: mywrite.o
 
 myterminalwrite: myterminalwrite.o
 	gcc -o myterminalwrite myterminalwrite.o
+
 
 
