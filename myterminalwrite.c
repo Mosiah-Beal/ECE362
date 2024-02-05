@@ -27,21 +27,23 @@ int main()
 
     while(1)
 	{
+		// If the user has entered Cntrl-C, exit the program
 		if(setexit)
 		break;
 
 		printf("Enter string - Cntrl-C to exit: \n");
 
 		char *input = malloc(sizeof(char) * 100);	// Allocate memory for the input string, 100 characters seems reasonable
-		fgets(input, 100, stdin);	// Get the input from terminal until the user presses Ctrl-C
+		fgets(input, 100, stdin);	// Get the first 99 characters from the terminal
 
 		// Parse the input string and append null character at the newline character
 		input[strcspn(input, "\n")] = 0;	// Remove the newline character from the input string
 
 		if(setexit ==0){
 		
+			// Print the input string to the terminal
 			printf("You entered: %s\n", input);
-			printf("File write was successful\n");
+			printf("File write was successful\n");	// print a success message to the terminal
 		}
 
 	}
