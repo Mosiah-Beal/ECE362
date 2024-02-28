@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 
 #define MAX_COMMAND_LENGTH 100
-#define MAX_ARGS 10
+#define MAX_ARGS 20
 
 int main() {
     char input[MAX_COMMAND_LENGTH];     // Buffer to store the input
