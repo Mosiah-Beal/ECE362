@@ -6,25 +6,27 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#define MAX_COMMAND_LENGTH 100
+#define MAX_LENGTH 100
 #define MAX_ARGS 20
 
 int main() {
-    char input[MAX_COMMAND_LENGTH];     // Buffer to store the input
-    char command[MAX_COMMAND_LENGTH];   // Buffer to store the command
-    char *args[MAX_ARGS];               // Array of pointers to the arguments
-    int i, num_args;
+    // Buffers and arrays to store the input and arguments
+    char input[MAX_LENGTH];         // Buffer to store the input
+    char command[MAX_LENGTH];       // Buffer to store the command
+    char *args[MAX_ARGS];           // Array of pointers to the arguments
+
+    // Time keeping variables
     time_t start, end;
     double elapsed;
 
 
     while (1) {
-        printf("Enter a command: ");
+        printf("Enter a command (max of %d chars): ", MAX_LENGTH - 1);
         fgets(input, sizeof(input), stdin);
 
         // separate the command and arguments by tokenizing the input
         // The first token in the args array is the command, the others are arguments
-        num_args = 0;
+        int num_args = 0;
         args[num_args++] = strtok(input, " \n");
         while ((args[num_args] = strtok(NULL, " \n")) != NULL) {
             num_args++;
