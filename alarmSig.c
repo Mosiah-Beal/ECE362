@@ -33,7 +33,10 @@ int main() {
             
             // User has entered something, so output the line
             printf("Output: %s", input);
-            printf("Time taken: %0.2f seconds\n", difftime(current_time, start_time));
+
+            // Calculate the time difference in seconds
+            double time_diff = difftime(current_time, start_time);
+            printf("Time difference: %d seconds\n", (int) time_diff);
 
 
             // Clear the alarm
