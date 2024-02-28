@@ -33,10 +33,16 @@ int main() {
             
             // User has entered something, so output the line
             printf("Output: %s", input);
-            printf("Time taken: %e seconds\n", time(&current_time) - start_time);
+            printf("Time taken: %0.2f seconds\n", difftime(current_time, start_time);
+
+
+            // Clear the alarm
+            alarm(0);
+
 
             // Update the start time
-            time(&start_time);
+            //time(&start_time);
+            //alarm(TIMEOUT_SECONDS); // Set the alarm for 10 seconds (again)
             break;
         }
 
