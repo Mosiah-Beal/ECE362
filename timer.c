@@ -26,12 +26,16 @@ int main() {
 
         // separate the command and arguments by tokenizing the input
         // The first token in the args array is the command, the others are arguments
+        // if the token is a pipe (|), it does not get added to the args array
         int num_args = 0;
         args[num_args++] = strtok(input, " \n");
         while ((args[num_args] = strtok(NULL, " \n")) != NULL) {
-            num_args++;
+            // check if the token is a pipe
+            if (strcmp(args[num_args], "|") == 0) {
+                // ignore the pipe and don't increment the number of arguments
+                continue;
+            }
         }
-
         // Check if the command is "exit"
         if (strcmp(args[0], "exit") == 0) {
             break;
