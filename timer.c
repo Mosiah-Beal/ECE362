@@ -9,7 +9,7 @@
 
 int main() {
     char command[MAX_COMMAND_LENGTH];   // Buffer to store the command
-    char *args[MAX_ARGS];               // Array of pointers to the arguments
+    char *args[MAX_ARGS];               
     int i, num_args;
 
     while (1) {

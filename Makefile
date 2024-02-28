@@ -30,5 +30,5 @@ $1: $1.o
 endef
 
 # Evaluate the rules for all targets in TARGETS
-$(foreach tgt, $(TARGETS), $(eval $(call TARGET_RULE, $(tgt))))
+#$(foreach tgt, $(TARGETS), $(eval $(call TARGET_RULE, $(tgt))))
 

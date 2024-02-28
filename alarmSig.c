@@ -4,20 +4,39 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <signal.h>
 #define TIMEOUT_SECONDS 10
 
+
+typedef void (*sighandler_t)(int);
+
+sighandler_t signal(int signum, sighandler_t handler);
+void alarm_handler(int signum);
+
+
 int main() {
-    char input[256];
-    time_t start_time, current_time;
-
+    char input[256];    // Buffer to store the input
+    time_t start_time, current_time;    // Variables to store the start and current time
+    
+    signal(SIGALRM, alarm_handler);  // Register the signal handler for SIGALRM
+    
     printf("Enter a line of text: ");
-
     time(&start_time);  // Get the current time
+    alarm(TIMEOUT_SECONDS); // Set the alarm for 10 seconds
 
+
+    // Greedy loop, traps the program for 10 seconds unless the user enters something
     while (1) {
+
+        // Check if the user has entered something (until newline is entered or buffer is full)
         if (fgets(input, sizeof(input), stdin) != NULL) {
+            
             // User has entered something, so output the line
             printf("Output: %s", input);
+            printf("Time taken: %e seconds\n", time(&current_time) - start_time);
+
+            // Update the start time
+            time(&start_time);
             break;
         }
 
@@ -25,13 +44,19 @@ int main() {
 
         // Check if the timeout has occurred
         if (current_time - start_time >= TIMEOUT_SECONDS) {
-            printf("Timeout occurred. No input received.\n");
+            printf("Timeout occurred. No input received in %e seconds.\n", current_time - start_time);
             break;
         }
 
-        // Sleep for a short period to avoid busy-waiting
-        usleep(100000);  // Sleep for 100 milliseconds
+        
     }
 
     return 0;
+}
+
+
+// Signal handler for SIGALRM
+void alarm_handler(int signum) {
+    printf("Timeout occurred. No input received in %d seconds.\n", TIMEOUT_SECONDS);
+    exit(0);
 }
