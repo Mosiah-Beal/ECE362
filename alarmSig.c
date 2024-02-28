@@ -13,10 +13,11 @@ typedef void (*sighandler_t)(int);
 sighandler_t signal(int signum, sighandler_t handler);
 void alarm_handler(int signum);
 
+time_t start_time, current_time;    // Variables to store the start and current time
 
 int main() {
     char input[256];    // Buffer to store the input
-    time_t start_time, current_time;    // Variables to store the start and current time
+    
     
     signal(SIGALRM, alarm_handler);  // Register the signal handler for SIGALRM
     
@@ -27,33 +28,26 @@ int main() {
 
     // Greedy loop, traps the program for 10 seconds unless the user enters something
     while (1) {
-
+		
         // Check if the user has entered something (until newline is entered or buffer is full)
         if (fgets(input, sizeof(input), stdin) != NULL) {
             
             // User has entered something, so output the line
             printf("Output: %s", input);
-            printf("Time taken: %0.2f seconds\n", difftime(current_time, start_time));
+            
+            // Update the current time for debugging purposes
+            time(&current_time);
+           
+           	// Calculate the time difference in seconds
+            double time_diff = difftime(current_time, start_time);
+            printf("Time difference: %d seconds\n", (int) time_diff);
 
 
             // Clear the alarm
             alarm(0);
 
-
-            // Update the start time
-            //time(&start_time);
-            //alarm(TIMEOUT_SECONDS); // Set the alarm for 10 seconds (again)
             break;
         }
-
-        time(&current_time);  // Get the current time
-
-        // Check if the timeout has occurred
-        if (current_time - start_time >= TIMEOUT_SECONDS) {
-            printf("Timeout occurred. No input received in %e seconds.\n", current_time - start_time);
-            break;
-        }
-
         
     }
 
@@ -63,6 +57,8 @@ int main() {
 
 // Signal handler for SIGALRM
 void alarm_handler(int signum) {
-    printf("Timeout occurred. No input received in %d seconds.\n", TIMEOUT_SECONDS);
+	time(&current_time);  // Update the current time
+    printf("\nTimeout occurred. No input received in %d seconds.\n", TIMEOUT_SECONDS);
+    printf("Difftime = %d seconds\n", (int) difftime(current_time, start_time));
     exit(0);
 }
