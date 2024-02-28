@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -13,6 +14,9 @@ int main() {
     char command[MAX_COMMAND_LENGTH];   // Buffer to store the command
     char *args[MAX_ARGS];               // Array of pointers to the arguments
     int i, num_args;
+    time_t start, end;
+    double elapsed;
+
 
     while (1) {
         printf("Enter a command: ");
@@ -45,7 +49,12 @@ int main() {
             exit(EXIT_FAILURE);
         } else {
             // Parent process
-            wait(NULL);
+            time(&start);   // Get the start time of the process
+            wait(NULL);     // Wait for the child process to finish
+            time(&end);     // Get the end time of the process
+            
+            elapsed = difftime(end, start); // Calculate the elapsed time
+            printf("Elapsed time: %.2f seconds\n", elapsed);
         }
     }
 
