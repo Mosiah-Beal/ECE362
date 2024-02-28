@@ -54,7 +54,7 @@ int main() {
             time(&end);     // Get the end time of the process
             
             elapsed = difftime(end, start); // Calculate the elapsed time
-            printf("Elapsed time: %.2f seconds\n", elapsed);
+            printf("Elapsed time: %d seconds\n", (int) elapsed);
         }
     }
 
