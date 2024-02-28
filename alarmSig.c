@@ -58,7 +58,7 @@ int main() {
 // Signal handler for SIGALRM
 void alarm_handler(int signum) {
 	time(&current_time);  // Update the current time
-    printf("\nTimeout occurred. No input received in %d seconds.\n", TIMEOUT_SECONDS);
-    printf("Difftime = %d seconds\n", (int) difftime(current_time, start_time));
+    printf("\nTimeout occurred. No input received in %d seconds.\n", TIMEOUT_SECONDS);  // Output the timeout message, add newline to separate from the user's input
+    printf("Difftime = %d seconds\n", (int) difftime(current_time, start_time));    // Output the time difference
     exit(0);
 }
