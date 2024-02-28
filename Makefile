@@ -21,14 +21,3 @@ timer: timer.o
 
 alarmSig: alarmSig.o
 	gcc -o $@ $^
-
-
-# Generate rules for all targets in TARGETS
-define TARGET_RULE
-$1: $1.o
-    gcc -o $$@ $$^
-endef
-
-# Evaluate the rules for all targets in TARGETS
-#$(foreach tgt, $(TARGETS), $(eval $(call TARGET_RULE, $(tgt))))
-
