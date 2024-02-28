@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -8,34 +9,36 @@
 #define MAX_ARGS 10
 
 int main() {
+    char input[MAX_COMMAND_LENGTH];     // Buffer to store the input
     char command[MAX_COMMAND_LENGTH];   // Buffer to store the command
-    char *args[MAX_ARGS];               
+    char *args[MAX_ARGS];               // Array of pointers to the arguments
     int i, num_args;
 
     while (1) {
         printf("Enter a command: ");
-        fgets(command, sizeof(command), stdin);
+        fgets(input, sizeof(input), stdin);
 
-        // Remove newline character from the command
-        command[strcspn(command, "\n")] = '\0';
-
-        // Tokenize the command into arguments
-        char *token = strtok(command, " ");
-        i = 0;
-        while (token != NULL && i < MAX_ARGS - 1) {
-            args[i++] = token;
-            token = strtok(NULL, " ");
+        // separate the command and arguments by tokenizing the input
+        // The first token in the args array is the command, the others are arguments
+        num_args = 0;
+        args[num_args++] = strtok(input, " \n");
+        while ((args[num_args] = strtok(NULL, " \n")) != NULL) {
+            num_args++;
         }
-        args[i] = NULL;
-        num_args = i;
 
+        // Check if the command is "exit"
+        if (strcmp(args[0], "exit") == 0) {
+            break;
+        }
+
+        
         // Fork a child process to execute the command
         pid_t pid = fork();
 
-        if (pid == -1) {
+        if (pid == -1) {            // Check if the fork failed
             perror("fork");
             exit(EXIT_FAILURE);
-        } else if (pid == 0) {
+        } else if (pid == 0) {      // Child process
             // Child process
             execvp(args[0], args);
             perror("execvp");
@@ -48,38 +51,4 @@ int main() {
 
     return 0;
 }
-#include <stdbool.h>
 
-// Check if the command is "exit"
-if (strcmp(args[0], "exit") == 0) {
-    break;
-}
-
-// Check if the command is "cd"
-if (strcmp(args[0], "cd") == 0) {
-    // Change directory to the specified path
-    if (num_args > 1) {
-        if (chdir(args[1]) != 0) {
-            perror("chdir");
-        }
-    } else {
-        printf("Usage: cd <directory>\n");
-    }
-    continue;
-}
-
-// Fork a child process to execute the command
-pid_t pid = fork();
-
-if (pid == -1) {
-    perror("fork");
-    exit(EXIT_FAILURE);
-} else if (pid == 0) {
-    // Child process
-    execvp(args[0], args);
-    perror("execvp");
-    exit(EXIT_FAILURE);
-} else {
-    // Parent process
-    wait(NULL);
-}
