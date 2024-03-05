@@ -159,6 +159,9 @@ void makeAnImage(int rows, int cols, int threads) {
     for(long t=0; t<threads; t++){
         pthread_join(thread[t], NULL);
     }
+
+    // The image has been created
+    printf("The image has been created.\n");
 }
 
 /**
