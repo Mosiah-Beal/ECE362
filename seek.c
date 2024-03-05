@@ -32,7 +32,8 @@ int Image[MAX_ROWS][MAX_COLS];
 
 
 int checkForMatch(int row, int col);
-void makeAnImage();
+void makeAnImage(int rows, int cols, int threads);
+void *makeAnImageThreads(threadData_t *threadData);
 int checkArguments(int rows, int cols, int detect_len, int threads);
 
 int main(int argc, char *argv[]) {
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
     printf("\nRows: %d, Cols: %d, Detect_len: %d, Threads: %d\n", Rows, Cols, Detect_len, Threads);
 
     // Fill the image with random 1s and 0s
-    makeAnImage();
+    makeAnImage(Rows, Cols, Threads);
 
 
     // Check for matches
@@ -117,6 +118,7 @@ void makeAnImage(int rows, int cols, int threads) {
     // For simplicity, just distribute the work along either the rows
     int work = rows / threads;
     int remainder = rows % threads;
+    long t;
 
     // Create the array of threads
     pthread_t thread[threads];
@@ -125,7 +127,7 @@ void makeAnImage(int rows, int cols, int threads) {
     threadData_t threadData[threads];
 
     // Initialize the thread data
-    for(long t=0; t<threads; i++) {
+    for(t=0; t<threads; t++) {
         threadData[t].threadID = t;
 
         // Determine the start and end rows for each thread
@@ -147,7 +149,7 @@ void makeAnImage(int rows, int cols, int threads) {
 
     // Create the threads
     int rc;
-    for(long t=0; t<threads; t++){
+    for(t=0; t<threads; t++){
         rc = pthread_create(&thread[t], NULL, makeAnImageThreads, (void *)&threadData[t]);
         if (rc){
             printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -156,7 +158,7 @@ void makeAnImage(int rows, int cols, int threads) {
     }
 
     // Wait for the threads to finish
-    for(long t=0; t<threads; t++){
+    for(t=0; t<threads; t++){
         pthread_join(thread[t], NULL);
     }
 
