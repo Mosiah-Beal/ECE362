@@ -208,7 +208,11 @@ int checkArguments(int rows, int cols, int detect_len, int threads) {
  * @param threadData 
  * @return void* 
  */
-void *makeAnImageThreads(threadData_t *threadData) {
+void *makeAnImageThreads(void *threadData) {
+    
+    // Cast the void pointer to a threadData_t pointer
+    threadData_t *threadData = (threadData_t *)threadData;
+    
     // Indexing variables
     int r, c;
     
