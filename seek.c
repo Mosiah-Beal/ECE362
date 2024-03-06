@@ -41,10 +41,10 @@ pthread_mutex_t counter_lock;
 
 
 void *checkForMatch(void *args);
-void checkMatchWrapper();
+void checkMatchWrapper(void);
 void makeAnImage(void);
-void *makeAnImageThreads(threadData_t *threadData_arg);
-int checkArguments();
+void *makeAnImageThreads(void *threadData_arg);
+int checkArguments(void);
 
 int main(int argc, char *argv[]) {
     int found =0;
