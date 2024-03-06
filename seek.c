@@ -168,9 +168,9 @@ void checkMatchWrapper() {
         }
 
         for(int col=0; col < Cols; col++) {
-            
+            t = 0;
             // Find a thread that is not busy
-            for(t=0; ; t++) {
+            while(1) {
                 if( threadData[t].busy == 0 ) {
                     // Found a thread that is not busy
                     break;
