@@ -43,7 +43,7 @@ pthread_mutex_t counter_lock;
 void *checkForMatch(void *args);
 void checkMatchWrapper();
 void makeAnImage(void);
-void *makeAnImageThreads(threadData_t *threadData);
+void *makeAnImageThreads(threadData_t *threadData_arg);
 int checkArguments();
 
 int main(int argc, char *argv[]) {
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     // Check for matches
     checkMatchWrapper();
 
-    
+
     // // Check for matches (go to current cell and check right and down for matches of length Detect_len)
     // for(row=0; row < Rows; row++)
     //     for(col=0; col < Cols; col++)
@@ -326,10 +326,10 @@ void makeAnImage() {
  * @param threadData 
  * @return void* 
  */
-void *makeAnImageThreads(void *threadData) {
+void *makeAnImageThreads(void *threadData_arg) {
     
     // Cast the void pointer to a threadData_t pointer
-    threadData_t *threadData = (threadData_t *)threadData;
+    threadData_t *threadData = (threadData_t *)threadData_arg;
     
     // Indexing variables
     int r, c;
@@ -407,7 +407,7 @@ void *makeAnImageThreads(void *threadData) {
 
 */
 
-void oldCountMatches(int row, int col) {
+int oldCountMatches(int row, int col) {
     int r,c, length;
     int detect = 0;
 
@@ -438,3 +438,4 @@ void oldCountMatches(int row, int col) {
    }
 
   return detect;
+}
