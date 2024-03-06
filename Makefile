@@ -4,5 +4,6 @@ seek: seek.c
 base: seeker-base.c
 	gcc -ggdb -o base seeker-base.c
 
-
+clean:
+	rm -f seek base
 
