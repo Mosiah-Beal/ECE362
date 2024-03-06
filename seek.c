@@ -182,6 +182,8 @@ void checkMatchWrapper() {
 
 
     // Wait for the threads to finish
+    printf("Waiting for threads to finish.\n");
+    
     // join the threads
     for(t=0; t<Threads; t++){
         pthread_join(thread[t], NULL);
