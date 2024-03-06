@@ -21,6 +21,13 @@ typedef struct {
     long threadID;  // The thread ID
 } threadData_t;
 
+typedef struct {
+    int row;    // The row of the cell to check
+    int col;    // The column of the cell to check
+    int first_call;     // The first call to this thread
+
+    long threadID;  // The thread ID
+} match_t;
 
 
 
@@ -29,9 +36,12 @@ int Rows        = MAX_ROWS;
 int Cols        = MAX_COLS;
 int Detect_len  = DETECT_LEN;
 int Image[MAX_ROWS][MAX_COLS];
+int counter = 0;
+pthread_mutex_t counter_lock;
 
 
-int checkForMatch(int row, int col);
+void *checkForMatch(void *args);
+void checkMatchWrapper();
 void makeAnImage(void);
 void *makeAnImageThreads(threadData_t *threadData);
 int checkArguments();
@@ -70,12 +80,16 @@ int main(int argc, char *argv[]) {
     makeAnImage();
 
 
-    // Check for matches (go to current cell and check right and down for matches of length Detect_len)
-    for(row=0; row < Rows; row++)
-        for(col=0; col < Cols; col++)
-            found += checkForMatch(row,col);
+    // Check for matches
+    checkMatchWrapper();
 
-    printf("\nTOTAL DETECTED: %d\n", found);
+    
+    // // Check for matches (go to current cell and check right and down for matches of length Detect_len)
+    // for(row=0; row < Rows; row++)
+    //     for(col=0; col < Cols; col++)
+    //         found += checkForMatch(row,col);
+
+    // printf("\nTOTAL DETECTED: %d\n", found);
 
     exit(0);
 }
@@ -116,43 +130,132 @@ int checkArguments() {
     return 0;
 }
 
-void checkMatchWrapper(int row, int col) {
+void checkMatchWrapper() {
+    // Create the array of threads
+    pthread_t thread[Threads];
+
+    // Create the thread data
+    match_t threadData[Threads];
+
+    // determine how to split the work among the threads
+
+    // Create a lock for the results
+    pthread_mutex_init(&counter_lock, NULL);
+
+
+    // Create the threads, send the threads in a circular pattern
+    long t;     // thread index (will be incremented and modulo to loop)
+    int rc;     // return code from pthread_create
+    for(t=0; t<Threads; t++){
+        threadData[t].first_call = 1;   // This will be the first call to the thread
+    }
+    t = 0;      // reset the thread index (should be unnecessary, but just in case)
+
+    // Go through the rows and columns and check for matches
+    for(int row=0; row < Rows; row++) {
+        for(int col=0; col < Cols; col++) {
+
+            // Check if we need to wait for a thread to finish
+            if(threadData[t].first_call == 0) {  
+                pthread_join(thread[t], NULL);
+            }
+            else {
+                threadData[t].first_call = 0;   // This is no longer the first call to the thread
+            }
+
+            // Pack the arguments for the thread
+            threadData[t].row = row;
+            threadData[t].col = col;
+            threadData[t].threadID = t;
+
+            // Send the thread to check for a match
+            rc = pthread_create(&thread[t], NULL, checkForMatch, (void *)&threadData[t]);
+            if (rc){
+                printf("ERROR; return code from pthread_create() is %d\n", rc);
+                exit(-1);
+            }
+
+            // Increment the thread index and loop back to 0 if necessary
+            t = (t+1) % Threads;
+        }
+    }
+
+
+    // Wait for the threads to finish
+    // join the threads
+    for(t=0; t<Threads; t++){
+        pthread_join(thread[t], NULL);
+    }
+    printf("All threads have joined.\n");
+
+    // Destroy the lock
+    pthread_mutex_destroy(&counter_lock);
+    
+    // print the results
+    printf("There were %d matches found.\n", counter);
     
 }
 
 
+void *checkForMatch(void *args) {
+    // unpack the arguments
+    match_t *match = (match_t *)args;
+    int row = match->row;
+    int col = match->col;
+    
 
-int checkForMatch(int row, int col) {
-    int r,c, length;
-    int detect = 0;
+    // check that there is enough space to achieve a match along the columns
+    if( Cols - col >= Detect_len){
+        // check for a match along the columns (Detect_len streak of 1s)
+        for(length=0, c=col; c < Cols; c++){
+            if( Image[row][c] == 1 ) { 
+                // check if streak is long enough
+                if( ++length == Detect_len ) {
+                    // match of specified length found
 
-    // Check for horizontal matches
-    for(length=0, c=col; c < Cols; c++){
-        if( Image[row][c] == 1 ) { 
-            if( ++length == Detect_len ) {
-                detect++;
-                break; 
+                    // get a lock before updating the counter
+                    pthread_mutex_lock(&counter_lock);
+                    counter++;
+                    pthread_mutex_unlock(&counter_lock);
+                    
+                    // Match found, no need to continue
+                    break; 
+                }
             }
-        }
-        else { 
-            break;
+            else { // Image[row][c] == 0
+                // Streak broken, no need to continue
+                break;
+            }
         }
     }
 
-   // Check for vertical matches
-   for(length=0, r=row; r < Rows; r++) {
-      if( Image[r][col] == 1 ) {
-        if( ++length == Detect_len ) { 
-           detect++; 
-           break; 
-        }
-      }
-      else {
-        break;
-      }
-   }
+    // check that there is enough space to achieve a match along the rows
+    if( Rows - row >= Detect_len){
+        // check for a match along the rows (Detect_len streak of 1s)
+        for(length=0, r=row; r < Rows; r++) {
+            if( Image[r][col] == 1 ) {
+                // check if streak is long enough
+                if( ++length == Detect_len ) { 
+                    // match of specified length found
 
-  return detect;
+                    // get a lock before updating the counter
+                    pthread_mutex_lock(&counter_lock);
+                    counter++;
+                    pthread_mutex_unlock(&counter_lock);
+                    
+                    // Match found, no need to continue
+                    break; 
+                }
+            }
+            else { // Image[r][col] == 0
+                // Streak broken, no need to continue
+                break;
+            }
+        }
+    }
+
+    // The thread is done
+    printf("Thread %ld done.\n", match->threadID);
 }
 
 
@@ -304,3 +407,34 @@ void *makeAnImageThreads(void *threadData) {
 
 */
 
+void oldCountMatches(int row, int col) {
+    int r,c, length;
+    int detect = 0;
+
+    // Check for horizontal matches
+    for(length=0, c=col; c < Cols; c++){
+        if( Image[row][c] == 1 ) { 
+            if( ++length == Detect_len ) {
+                detect++;
+                break; 
+            }
+        }
+        else { 
+            break;
+        }
+    }
+
+   // Check for vertical matches
+   for(length=0, r=row; r < Rows; r++) {
+      if( Image[r][col] == 1 ) {
+        if( ++length == Detect_len ) { 
+           detect++; 
+           break; 
+        }
+      }
+      else {
+        break;
+      }
+   }
+
+  return detect;
