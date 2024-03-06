@@ -157,6 +157,7 @@ void checkMatchWrapper() {
     for(t=0; t<Threads; t++){
         threadData[t].first_call = 1;   // This will be the first call to the thread
         threadData[t].busy = 0;         // The thread is not busy
+        threadData[t].threadID = t;
     }
 
     // Go through the rows and columns and check for matches
@@ -190,7 +191,6 @@ void checkMatchWrapper() {
             // Pack the arguments for the thread
             threadData[t].row = row;
             threadData[t].col = col;
-            threadData[t].threadID = t;
 
             // Send the thread to check for a match
             threadData[t].busy = 1;         // The thread is busy
