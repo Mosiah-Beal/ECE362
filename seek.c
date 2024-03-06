@@ -202,12 +202,13 @@ void *checkForMatch(void *args) {
     match_t *match = (match_t *)args;
     int row = match->row;
     int col = match->col;
+    int r, c, length;
     
 
     // check that there is enough space to achieve a match along the columns
     if( Cols - col >= Detect_len){
         // check for a match along the columns (Detect_len streak of 1s)
-        for(int length=0, int c=col; c < Cols; c++){
+        for(length=0, c=col; c < Cols; c++){
             if( Image[row][c] == 1 ) { 
                 // check if streak is long enough
                 if( ++length == Detect_len ) {
@@ -232,7 +233,7 @@ void *checkForMatch(void *args) {
     // check that there is enough space to achieve a match along the rows
     if( Rows - row >= Detect_len){
         // check for a match along the rows (Detect_len streak of 1s)
-        for(int length=0, int r=row; r < Rows; r++) {
+        for(length=0, r=row; r < Rows; r++) {
             if( Image[r][col] == 1 ) {
                 // check if streak is long enough
                 if( ++length == Detect_len ) { 
