@@ -274,13 +274,13 @@ void makeAnImage() {
     long t;
 
     // Create the array of threads
-    pthread_t thread[threads];
+    pthread_t thread[Threads];
 
     // Create the thread data
-    threadData_t threadData[threads];
+    threadData_t threadData[Threads];
 
     // Initialize the thread data
-    for(t=0; t<threads; t++) {
+    for(t=0; t<Threads; t++) {
         threadData[t].threadID = t;
 
         // Determine the start and end rows for each thread
