@@ -139,6 +139,13 @@ void checkMatchWrapper() {
     match_t threadData[Threads];
 
     // determine how to split the work among the threads
+    int totalWork = Rows * Cols;
+    int work = totalWork / Threads;
+    int remainder = totalWork % Threads;
+
+    // tell the user how the work is being split
+    printf("Total work: %d\n", totalWork);
+    printf("Work per thread: %d\n", work);
 
     // Create a lock for the results
     pthread_mutex_init(&counter_lock, NULL);
@@ -151,9 +158,15 @@ void checkMatchWrapper() {
         threadData[t].first_call = 1;   // This will be the first call to the thread
         threadData[t].busy = 0;         // The thread is not busy
     }
-    
+
     // Go through the rows and columns and check for matches
     for(int row=0; row < Rows; row++) {
+
+        // give the user an update on the progress every 100 rows
+        if( row % 100 == 0 ) {
+            printf("Checking row %d\n", row);
+        }
+
         for(int col=0; col < Cols; col++) {
             
             // Find a thread that is not busy
