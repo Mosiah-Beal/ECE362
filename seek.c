@@ -185,6 +185,7 @@ void checkMatchWrapper() {
     // join the threads
     for(t=0; t<Threads; t++){
         pthread_join(thread[t], NULL);
+        printf("Thread %ld done.\n", threadData[t].threadID);
     }
     printf("All threads have joined.\n");
 
@@ -256,7 +257,7 @@ void *checkForMatch(void *args) {
     }
 
     // The thread is done
-    printf("Thread %ld done.\n", match->threadID);
+    //printf("Thread %ld done.\n", match->threadID);
 }
 
 
