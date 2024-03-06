@@ -25,6 +25,7 @@ typedef struct {
     int row;    // The row of the cell to check
     int col;    // The column of the cell to check
     int first_call;     // The first call to this thread
+    int busy;           // The thread is busy
 
     long threadID;  // The thread ID
 } match_t;
@@ -148,12 +149,22 @@ void checkMatchWrapper() {
     int rc;     // return code from pthread_create
     for(t=0; t<Threads; t++){
         threadData[t].first_call = 1;   // This will be the first call to the thread
+        threadData[t].busy = 0;         // The thread is not busy
     }
-    t = 0;      // reset the thread index (should be unnecessary, but just in case)
-
+    
     // Go through the rows and columns and check for matches
     for(int row=0; row < Rows; row++) {
         for(int col=0; col < Cols; col++) {
+            
+            // Find a thread that is not busy
+            for(t=0; ; i++) {
+                if( threadData[t].busy == 0 ) {
+                    // Found a thread that is not busy
+                    break;
+                }
+                // Increment the thread index and loop back to 0 if necessary
+                t = (t+1) % Threads;
+            }
 
             // Check if we need to wait for a thread to finish
             if(threadData[t].first_call == 0) {  
@@ -169,6 +180,7 @@ void checkMatchWrapper() {
             threadData[t].threadID = t;
 
             // Send the thread to check for a match
+            threadData[t].busy = 1;         // The thread is busy
             rc = pthread_create(&thread[t], NULL, checkForMatch, (void *)&threadData[t]);
             if (rc){
                 printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -183,7 +195,7 @@ void checkMatchWrapper() {
 
     // Wait for the threads to finish
     printf("Waiting for threads to finish.\n");
-    
+
     // join the threads
     for(t=0; t<Threads; t++){
         pthread_join(thread[t], NULL);
@@ -260,6 +272,7 @@ void *checkForMatch(void *args) {
 
     // The thread is done
     //printf("Thread %ld done.\n", match->threadID);
+    match->busy = 0;    // The thread is not busy anymore
 }
 
 
