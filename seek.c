@@ -188,6 +188,17 @@ void checkMatchWrapper() {
                 threadData[t].first_call = 0;   // This is no longer the first call to the thread
             }
 
+            // make sure t is still within the bounds of the threads
+            if( t >= Threads ) {
+            
+                printf("Applying modulo to t\n")
+                t = t % Threads;
+                printf("t is now %ld\n", t);
+
+                printf("t was out of bounds\n");
+                exit(-1);
+            }
+
             // Pack the arguments for the thread
             threadData[t].row = row;
             threadData[t].col = col;
