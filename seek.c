@@ -191,7 +191,7 @@ void checkMatchWrapper() {
             // make sure t is still within the bounds of the threads
             if( t >= Threads ) {
             
-                printf("Applying modulo to t\n")
+                printf("Applying modulo to t\n");
                 t = t % Threads;
                 printf("t is now %ld\n", t);
 
@@ -447,36 +447,3 @@ void *makeAnImageThreads(void *threadData_arg) {
 
 
 */
-
-int oldCountMatches(int row, int col) {
-    int r,c, length;
-    int detect = 0;
-
-    // Check for horizontal matches
-    for(length=0, c=col; c < Cols; c++){
-        if( Image[row][c] == 1 ) { 
-            if( ++length == Detect_len ) {
-                detect++;
-                break; 
-            }
-        }
-        else { 
-            break;
-        }
-    }
-
-   // Check for vertical matches
-   for(length=0, r=row; r < Rows; r++) {
-      if( Image[r][col] == 1 ) {
-        if( ++length == Detect_len ) { 
-           detect++; 
-           break; 
-        }
-      }
-      else {
-        break;
-      }
-   }
-
-  return detect;
-}
