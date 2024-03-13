@@ -3,14 +3,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 
 #define MAX_ROWS     16000
 #define MAX_COLS     16000
-#define DETECT_LEN      20
 #define MAX_THREADS     16
+#define DETECT_LEN      20
 
 
-// Make a struct to pass the coordinates to the threads
+
+// Make a struct to pass arguments to the image threads
 typedef struct {
     int startRow;   // Start row in the image for the thread
     int endRow;     // End row in the image for the thread
@@ -19,8 +21,9 @@ typedef struct {
     int endCol;     // End column in the image for the thread
 
     long threadID;  // The thread ID
-} threadData_t;
+} ImageData_t;
 
+// Make a struct to pass arguments to the single cell threads
 typedef struct {
     int row;    // The row of the cell to check
     int col;    // The column of the cell to check
@@ -30,13 +33,23 @@ typedef struct {
     long threadID;  // The thread ID
 } match_t;
 
+// Make a struct to pass arguments to the batch threads
+typedef struct {
+    int startRow;   // Start row in the image
+    int startCol;   // Start column in the image
 
+    int work;       // The amount of work to be done by the thread
+    long threadID;  // The thread ID
+} batch_t;
 
+// Default values
 int Threads     = 1;
 int Rows        = MAX_ROWS;
 int Cols        = MAX_COLS;
 int Detect_len  = DETECT_LEN;
 int Image[MAX_ROWS][MAX_COLS];
+
+// Counter for the number of matches found
 int counter = 0;
 pthread_mutex_t counter_lock;
 
@@ -77,20 +90,30 @@ int main(int argc, char *argv[]) {
 
     // FIXME: write checks for when the number of threads is greater than the number of rows/cols
 
+    // Start image filling timer
+    printf("Filling the image with random 1s and 0s.\n");
+    time_t imageStart = time(NULL);
+
     // Fill the image with random 1s and 0s
     makeAnImage();
+    time_t imageEnd = time(NULL);
 
+    // Calculate and print the time difference
+    double imageTime = difftime(imageEnd, imageStart);
+    printf("The image has been filled. It took %.2f seconds.\n", imageTime);
+
+    // Start checking for matches timer
+    printf("Checking for matches.\n");
+    time_t matchStart = time(NULL);
 
     // Check for matches
-    checkMatchWrapper();
+    //checkMatchWrapper();
+    matchBatchWork(Rows, Cols, Threads, Detect_len);
+    time_t matchEnd = time(NULL);
 
-
-    // // Check for matches (go to current cell and check right and down for matches of length Detect_len)
-    // for(row=0; row < Rows; row++)
-    //     for(col=0; col < Cols; col++)
-    //         found += checkForMatch(row,col);
-
-    // printf("\nTOTAL DETECTED: %d\n", found);
+    // Calculate and print the time difference
+    double matchTime = difftime(matchEnd, matchStart);
+    printf("There were %d matches found. It took %.2f seconds.\n", counter, matchTime);
 
     exit(0);
 }
@@ -169,7 +192,7 @@ void checkMatchWrapper() {
         }
 
         for(int col=0; col < Cols; col++) {
-            t = 0;
+            //t = 0;
             // Find a thread that is not busy
             while(1) {
                 if( threadData[t].busy == 0 ) {
@@ -179,6 +202,9 @@ void checkMatchWrapper() {
                 // Increment the thread index and loop back to 0 if necessary
                 t = (t+1) % Threads;
             }
+
+            // Print the thread index
+            printf("Thread index: %ld\n", t);
 
             // Check if we need to wait for a thread to finish
             if(threadData[t].first_call == 0) {  
@@ -193,7 +219,7 @@ void checkMatchWrapper() {
             threadData[t].col = col;
 
             // Send the thread to check for a match
-            threadData[t].busy = 1;         // The thread is busy
+            threadData[t].busy = 1;         // The thread is now busy
             rc = pthread_create(&thread[t], NULL, checkForMatch, (void *)&threadData[t]);
             if (rc){
                 printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -201,7 +227,7 @@ void checkMatchWrapper() {
             }
 
             // Increment the thread index and loop back to 0 if necessary
-            t = (t+1) % Threads;
+            // t = (t+1) % Threads;
         }
     }
 
@@ -218,9 +244,6 @@ void checkMatchWrapper() {
 
     // Destroy the lock
     pthread_mutex_destroy(&counter_lock);
-    
-    // print the results
-    printf("There were %d matches found.\n", counter);
     
 }
 
@@ -307,7 +330,7 @@ void makeAnImage() {
     pthread_t thread[Threads];
 
     // Create the thread data
-    threadData_t threadData[Threads];
+    ImageData_t threadData[Threads];
 
     // Initialize the thread data
     for(t=0; t<Threads; t++) {
@@ -358,8 +381,8 @@ void makeAnImage() {
  */
 void *makeAnImageThreads(void *threadData_arg) {
     
-    // Cast the void pointer to a threadData_t pointer
-    threadData_t *threadData = (threadData_t *)threadData_arg;
+    // Cast the void pointer to a ImageData_t pointer
+    ImageData_t *threadData = (ImageData_t *)threadData_arg;
     
     // Indexing variables
     int r, c;
@@ -437,35 +460,165 @@ void *makeAnImageThreads(void *threadData_arg) {
 
 */
 
-int oldCountMatches(int row, int col) {
-    int r,c, length;
-    int detect = 0;
 
-    // Check for horizontal matches
-    for(length=0, c=col; c < Cols; c++){
-        if( Image[row][c] == 1 ) { 
-            if( ++length == Detect_len ) {
-                detect++;
-                break; 
-            }
+/**
+ * @brief matchBatchWork
+ * 
+ * @param rows
+ * @param cols
+ * @param threads
+ * @param detect_len
+ * 
+ */
+void matchBatchWork(int rows, int cols, int threads, int detect_len) {
+    // Create the array of threads
+    pthread_t thread[threads];
+
+    // Create the thread data
+    batch_t threadData[threads];
+
+    // determine how to split the work among the threads
+    int totalWork = rows * cols;
+    int work = totalWork / threads;
+    int remainder = totalWork % threads;
+
+    // tell the user how the work is being split
+    printf("Total work: %d\n", totalWork);
+    printf("Work per thread: %d\n", work);
+
+    // Create a lock for the results
+    pthread_mutex_init(&counter_lock, NULL);
+
+    // Create the batch threads
+    int rc;
+
+    for(long t=0; t<threads; t++){
+        // Determine the starting coordinates and the amount of work for each thread
+        
+        // Use the index to determine the starting coordinates
+        int startIndex = t * work;
+        
+        int startRow = startIndex / cols;
+        int startCol = startIndex % cols;        
+        
+        // Fill in the thread data
+        threadData[t].threadID = t;
+        threadData[t].startRow = startRow;
+        threadData[t].startCol = startCol;
+
+        // The last thread will do the remainder of the work left over
+        if( t == threads-1 ) {
+            threadData[t].work = work + remainder;
         }
-        else { 
-            break;
+        else {
+            threadData[t].work = work;
         }
+
+        // Create the threads
+        rc = pthread_create(&thread[t], NULL, checkForMatchBatch, (void *)&threadData[t]);
+        if (rc){
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+
     }
 
-   // Check for vertical matches
-   for(length=0, r=row; r < Rows; r++) {
-      if( Image[r][col] == 1 ) {
-        if( ++length == Detect_len ) { 
-           detect++; 
-           break; 
-        }
-      }
-      else {
-        break;
-      }
-   }
+    // Wait for the threads to finish
+    for(long t=0; t<threads; t++){
+        pthread_join(thread[t], NULL);
+    }
 
-  return detect;
+    // Destroy the lock
+    pthread_mutex_destroy(&counter_lock);
+
+}
+
+/**
+ * @brief *checkForMatchBatch
+ * 
+ * @param args
+ * 
+ * @note This function will be called by each thread to check for matches
+ * Each thread will be given a portion of the image to check
+ * This will be dictated by the starting coordinates and the amount of work
+ * to be done by each thread.
+ * 
+ * The thread will check for matches in the image and update the counter
+ * if a match is found. It will need to check when it reaches the end of its
+ * row and move to the next row. It will return when it reaches the end of
+ * its work.
+ * 
+ */
+void *checkForMatchBatch(void *args) {
+    // unpack the arguments
+    batch_t *batch = (batch_t *)args;
+    int startRow = batch->startRow;
+    int startCol = batch->startCol;
+    int work = batch->work;
+    int r, c, length;
+
+    // check for matches in the image
+    for(int i=0; i<work; i++) {
+        
+        // get the ending coordinates from the index, since we may not start at the beginning of the row
+        r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
+        c = startCol + (i % Cols);                  // From the current index, find how many columns to move over
+
+        // check that there is enough space to achieve a match along the columns
+        if( Cols - c >= Detect_len){
+            // check for a match along the columns (Detect_len streak of 1s)
+            for(length=0; c < Cols; c++){
+                if( Image[r][c] == 1 ) { 
+                    // check if streak is long enough
+                    if( ++length == Detect_len ) {
+                        // match of specified length found
+
+                        // get a lock before updating the counter
+                        pthread_mutex_lock(&counter_lock);
+                        counter++;
+                        pthread_mutex_unlock(&counter_lock);
+                        
+                        // Match found, no need to continue
+                        break; 
+                    }
+                }
+                else { // Image[row][c] == 0
+                    // Streak broken, no need to continue
+                    break;
+                }
+            }
+        }
+
+        // check that there is enough space to achieve a match along the rows
+        if( Rows - r >= Detect_len){
+            // check for a match along the rows (Detect_len streak of 1s)
+            for(length=0; r < Rows; r++) {
+                if( Image[r][c] == 1 ) {
+                    // check if streak is long enough
+                    if( ++length == Detect_len ) { 
+                        // match of specified length found
+
+                        // get a lock before updating the counter
+                        pthread_mutex_lock(&counter_lock);
+                        counter++;
+                        pthread_mutex_unlock(&counter_lock);
+                        
+                        // Match found, no need to continue
+                        break; 
+                    }
+                }
+                else { // Image[r][col] == 0
+                    // Streak broken, no need to continue
+                    break;
+                }
+            }
+        }
+    
+        // Done with this cell, move to the next one
+    }
+
+    // The thread is done with its work
+    printf("Thread %ld done.\n", batch->threadID);
+    pthread_exit(NULL);
+
 }
