@@ -1,3 +1,5 @@
+all: seek base
+
 seek: seek.c
 	gcc -std=c99 -ggdb -pthread -o seek seek.c
 

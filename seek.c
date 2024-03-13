@@ -89,7 +89,6 @@ int main(int argc, char *argv[]) {
     // Check for matches
     //checkMatchWrapper();
     matchBatchWork();
-
     clock_gettime(CLOCK_MONOTONIC, &matchEnd);
 
     // Calculate and print the time difference in milliseconds
@@ -216,13 +215,11 @@ void matchBatchWork() {
 
     // Create the batch threads
     int rc;
-
     for(long t=0; t<Threads; t++){
         // Determine the starting coordinates and the amount of work for each thread
         
         // Use the index to determine the starting coordinates
         int startIndex = t * work;
-        
         int startRow = startIndex / Cols;
         int startCol = startIndex % Cols;        
         
@@ -282,12 +279,12 @@ void *checkForMatchBatch(void *args) {
     int work = batch->work;
     int r, c, length;
 
-    // check for matches in the image
+    // Procede through the work queue, checking for matches
     for(int i=0; i<work; i++) {
         
-        // get the cell coordinates from the index, since we may not start at the beginning of the row
+        // get the cell coordinates from the index (this is the current cell in the work queue)
         r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
-        c = startCol + ((i + startCol) % Cols);                  // From the current index, find how many columns to move over
+        c = startCol + ((i + startCol) % Cols);     // From the current index, find how many columns to move over
 
         // check that there is enough space to achieve a match along the columns
         if( Cols - c >= Detect_len){
@@ -314,6 +311,8 @@ void *checkForMatchBatch(void *args) {
             }
         }
 
+        // Reset the column variable to now check along the rows
+        c = startCol + ((i + startCol) % Cols);
         // check that there is enough space to achieve a match along the rows
         if( Rows - r >= Detect_len){
             // check for a match along the rows (Detect_len streak of 1s)
