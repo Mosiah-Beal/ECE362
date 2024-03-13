@@ -56,6 +56,8 @@ pthread_mutex_t counter_lock;
 
 void *checkForMatch(void *args);
 void checkMatchWrapper(void);
+void *checkForMatchBatch(void *args);
+void matchBatchWork(int rows, int cols, int threads, int detect_len);
 void makeAnImage(void);
 void *makeAnImageThreads(void *threadData_arg);
 int checkArguments(void);
