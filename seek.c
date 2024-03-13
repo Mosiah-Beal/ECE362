@@ -95,31 +95,35 @@ int main(int argc, char *argv[]) {
 
     // Start image filling timer
     printf("Filling the image with random 1s and 0s.\n");
-    time_t imageStart = time(NULL);
+    struct timespec imageStart, imageEnd;
+clock_gettime(CLOCK_MONOTONIC, &imageStart);
 
-    // Fill the image with random 1s and 0s
-    //makeAnImage();
-    makeAnImageDeterministic();
-    time_t imageEnd = time(NULL);
+// Fill the image with random 1s and 0s
+//makeAnImage();
+makeAnImageDeterministic();
 
-    // Calculate and print the time difference
-    double imageTime = difftime(imageEnd, imageStart);
-    printf("The image has been filled. It took %.2f seconds.\n", imageTime);
+clock_gettime(CLOCK_MONOTONIC, &imageEnd);
 
-    // Start checking for matches timer
-    printf("Checking for matches.\n");
-    time_t matchStart = time(NULL);
+// Calculate and print the time difference in milliseconds
+long imageTime = (imageEnd.tv_sec - imageStart.tv_sec) * 1000 + (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;
+printf("The image has been filled. It took %ld milliseconds.\n", imageTime);
 
-    // Check for matches
-    //checkMatchWrapper();
-    matchBatchWork(Rows, Cols, Threads, Detect_len);
-    time_t matchEnd = time(NULL);
+// Start checking for matches timer
+printf("Checking for matches.\n");
+struct timespec matchStart, matchEnd;
+clock_gettime(CLOCK_MONOTONIC, &matchStart);
 
-    // Calculate and print the time difference
-    double matchTime = difftime(matchEnd, matchStart);
-    printf("There were %d matches found. It took %.2f seconds.\n", counter, matchTime);
+// Check for matches
+//checkMatchWrapper();
+matchBatchWork(Rows, Cols, Threads, Detect_len);
 
-    exit(0);
+clock_gettime(CLOCK_MONOTONIC, &matchEnd);
+
+// Calculate and print the time difference in milliseconds
+long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
+
+    return 0;
 }
 
 
