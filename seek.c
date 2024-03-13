@@ -532,8 +532,10 @@ void matchBatchWork() {
     printf("Work per thread: %d\n", work);
     
     // If the work is less than the number of threads, just use the first work threads
-    if( work < Threads ) {
-        Threads = work;
+    if( totalWork < Threads ) {
+        Threads = totalWork;
+        work = 1;
+        remainder = 0;
     }
 
     // Create the array of threads
