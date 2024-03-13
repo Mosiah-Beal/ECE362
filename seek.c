@@ -230,7 +230,7 @@ void checkMatchWrapper() {
             threadData[t].busy = 1;         // The thread is now busy
             rc = pthread_create(&thread[t], NULL, checkForMatch, (void *)&threadData[t]);
             if (rc){
-                printf("ERROR; return code from pthread_create() is %d\n", rc);
+                fprintf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
                 exit(-1);
             }
 
@@ -366,7 +366,7 @@ void makeAnImage() {
     for(t=0; t<Threads; t++){
         rc = pthread_create(&thread[t], NULL, makeAnImageThreads, (void *)&threadData[t]);
         if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            fprintf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
             exit(-1);
         }
     }
@@ -534,7 +534,7 @@ void matchBatchWork() {
         // Create the threads
         rc = pthread_create(&thread[t], NULL, checkForMatchBatch, (void *)&threadData[t]);
         if (rc){
-            printf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
+            fprintf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
             exit(-1);
         }
 
