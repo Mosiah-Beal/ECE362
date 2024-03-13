@@ -62,13 +62,13 @@ int main(int argc, char *argv[]) {
 
 
     // Valid arguments were passed to the program
-    printf("\nRows: %d, Cols: %d, Detect_len: %d, Threads: %d\n", Rows, Cols, Detect_len, Threads);
+    printf("Rows: %d, Cols: %d, Detect_len: %d, Threads: %d\n", Rows, Cols, Detect_len, Threads);
 
     // Time the image filling and matching
     struct timespec imageStart, imageEnd, matchStart, matchEnd;
 
     // Start image filling timer
-    printf("Filling the image with random 1s and 0s.\n");
+    // printf("Filling the image with random 1s and 0s.\n");
 
     // Fill the image with random 1s and 0s
     clock_gettime(CLOCK_MONOTONIC, &imageStart);    // Start the timer
@@ -84,11 +84,11 @@ int main(int argc, char *argv[]) {
         ImageSeconds--;
         ImageMilliseconds += 1000;
     }
-    printf("The image has been filled. It took %ld.%03ld seconds.\n", ImageSeconds, ImageMilliseconds);
+    // printf("The image has been filled. It took %ld.%03ld seconds.\n", ImageSeconds, ImageMilliseconds);
 
 
     // Start checking for matches timer
-    printf("Checking for matches.\n");
+    // printf("Checking for matches.\n");
     
     // Check for matches
     clock_gettime(CLOCK_MONOTONIC, &matchStart);    // Start the timer
