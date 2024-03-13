@@ -283,13 +283,17 @@ void *checkForMatchBatch(void *args) {
     for(int i=0; i<work; i++) {
         
         // get the cell coordinates from the index (this is the current cell in the work queue)
-        r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
-        c = startCol + ((i + startCol) % Cols);     // From the current index, find how many columns to move over
+        int cell_r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
+        int cell_c = startCol + ((i + startCol) % Cols);     // From the current index, find how many columns to move over
+
+        r = cell_r;
+        c = cell_c;
 
         // check that there is enough space to achieve a match along the columns
         if( Cols - c >= Detect_len){
             // check for a match along the columns (Detect_len streak of 1s)
             for(length=0; c < Cols; c++){
+                // check if the current cell is a 1
                 if( Image[r][c] == 1 ) { 
                     // check if streak is long enough
                     if( ++length == Detect_len ) {
@@ -300,19 +304,27 @@ void *checkForMatchBatch(void *args) {
                         counter++;
                         pthread_mutex_unlock(&counter_lock);
                         
-                        // Match found, no need to continue
+                        // Match found, no need to continue checking the columns
+                        // Done with this cell, move to the next one
+                        printf("Horizontal match found at Image[%d][%d]\n", cell_r, cell_c);
                         break; 
                     }
                 }
-                else { // Image[row][c] == 0
-                    // Streak broken, no need to continue
+                else { // Image[row][col] == 0
+                    // Streak broken, no need to continue checking the columns
                     break;
                 }
             }
         }
+        else {
+            // No need to continue, not enough space for a match
+            printf("Image[%d][%d]: Not enough space for a match along the columns\n", cell_r, cell_c);
+        }
 
-        // Reset the column variable to now check along the rows
-        c = startCol + ((i + startCol) % Cols);
+        // Reset the cell coordinates
+        r = cell_r;     // From the current index, find how many rows to move down
+        c = cell_c;     // From the current index, find how many columns to move over
+
         // check that there is enough space to achieve a match along the rows
         if( Rows - r >= Detect_len){
             // check for a match along the rows (Detect_len streak of 1s)
@@ -327,15 +339,21 @@ void *checkForMatchBatch(void *args) {
                         counter++;
                         pthread_mutex_unlock(&counter_lock);
                         
-                        // Match found, no need to continue
+                        // Match found, no need to continue checking the rows
+                        // Done with this cell, move to the next one
+                        printf("Vertical match found at Image[%d][%d]\n", cell_r, cell_c);
                         break; 
                     }
                 }
-                else { // Image[r][col] == 0
-                    // Streak broken, no need to continue
+                else { // Image[row][col] == 0
+                    // Streak broken, no need to continue checking the rows
                     break;
                 }
             }
+        }
+        else {
+            // No need to continue, not enough space for a match
+            printf("Image[%d][%d]: Not enough space for a match along the rows\n", cell_r, cell_c);
         }
     
         // Done with this cell, move to the next one
