@@ -522,12 +522,6 @@ void *makeAnImageThreads(void *threadData_arg) {
  * 
  */
 void matchBatchWork() {
-    // Create the array of threads
-    pthread_t thread[Threads];
-
-    // Create the thread data
-    batch_t threadData[Threads];
-
     // determine how to split the work among the threads
     int totalWork = Rows * Cols;
     int work = totalWork / Threads;
@@ -536,6 +530,19 @@ void matchBatchWork() {
     // tell the user how the work is being split
     printf("Total work: %d\n", totalWork);
     printf("Work per thread: %d\n", work);
+    
+    // If the work is less than the number of threads, just use the first work threads
+    if( work < Threads ) {
+        Threads = work;
+    }
+
+    // Create the array of threads
+    pthread_t thread[Threads];
+
+    // Create the thread data
+    batch_t threadData[Threads];
+
+
 
     // Create a lock for the results
     pthread_mutex_init(&counter_lock, NULL);
