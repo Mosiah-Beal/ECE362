@@ -77,7 +77,13 @@ int main(int argc, char *argv[]) {
 
     // Calculate and print the time difference in milliseconds
     long ImageSeconds = imageEnd.tv_sec - imageStart.tv_sec;
-    long ImageMilliseconds = (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;    
+    long ImageMilliseconds = (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;
+    
+    // Fix the time difference if it is negative
+    if(ImageMilliseconds < 0) {
+        ImageSeconds--;
+        ImageMilliseconds += 1000;
+    }
     printf("The image has been filled. It took %ld.%03ld seconds.\n", ImageSeconds, ImageMilliseconds);
 
 
@@ -92,6 +98,12 @@ int main(int argc, char *argv[]) {
     // Calculate and print the time difference in milliseconds
     long MatchSeconds = matchEnd.tv_sec - matchStart.tv_sec;
     long MatchMilliseconds = (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+    
+    // Fix the time difference if it is negative
+    if(MatchMilliseconds < 0) {
+        MatchSeconds--;
+        MatchMilliseconds += 1000;
+    }
     printf("There were %d matches found. It took %ld.%03ld seconds.\n", counter, MatchSeconds, MatchMilliseconds);
 
     return 0;
