@@ -177,7 +177,7 @@ void matchBatchWork() {
     int remainder = totalWork % Threads;
 
     // tell the user how the work is being split
-    printf("Total work: %d\n", totalWork);
+    //printf("Total work: %d\n", totalWork);
     //printf("Work per thread: %d\n", work);
     
     // If the work is less than the number of threads, just use the first work threads
@@ -199,9 +199,9 @@ void matchBatchWork() {
     }
 
     // Say how the work is being split
-    printf("Work per thread: %d\n", work);
-    printf("Remainder: %d\n", remainder);
-    printf("Threads: %d\n", Threads);
+    //printf("Work per thread: %d\n", work);
+    //printf("Remainder: %d\n", remainder);
+    //printf("Threads: %d\n", Threads);
 
     // Create the array of threads
     pthread_t thread[Threads];
