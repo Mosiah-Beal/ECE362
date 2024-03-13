@@ -538,6 +538,11 @@ void matchBatchWork() {
         remainder = 0;
     }
 
+    // Say how the work is being split
+    printf("Work per thread: %d\n", work);
+    printf("Remainder: %d\n", remainder);
+    printf("Threads: %d\n", Threads);
+
     // Create the array of threads
     pthread_t thread[Threads];
 
