@@ -92,8 +92,13 @@ int main(int argc, char *argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &matchEnd);
 
     // Calculate and print the time difference in milliseconds
-    long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
-    printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
+    long seconds = matchEnd.tv_sec - matchStart.tv_sec;
+    long milliseconds = (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+
+    // long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+    // printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
+
+    printf("There were %d matches found. It took %ld.%03ld seconds.\n", counter, seconds, milliseconds);
 
     return 0;
 }
@@ -181,13 +186,18 @@ void matchBatchWork() {
     
     // If the work is less than the number of threads, just use the first work threads
     if( totalWork < Threads ) {
-        Threads = totalWork;
+        // Give the first couple of threads 1 cell to check, and the others will do nothing
+        // If I was willing to rewrite the code, I could split the horizontal and vertical work
+        // To eeek out a little more performance
+        Threads = totalWork;    
+        
+        // Each thread will do 1 cell of work
         work = 1;
         remainder = 0;
     }
 
     // Print the image if it is small enough
-    if(totalWork < 64) {
+    if(totalWork <= 64) {
         // Array is small enough to be printed
         for(int r=0; r<Rows; r++) {
             for(int c=0; c<Cols; c++) {
