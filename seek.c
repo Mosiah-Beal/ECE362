@@ -283,8 +283,12 @@ void *checkForMatchBatch(void *args) {
     for(int i=0; i<work; i++) {
         
         // get the cell coordinates from the index (this is the current cell in the work queue)
-        int cell_r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
-        int cell_c = startCol + ((i + startCol) % Cols);     // From the current index, find how many columns to move over
+        int cell_r = startRow + ((i + startCol) / Cols);    // From the current index, find how many rows to move down
+        int cell_c = (startCol + i) % Cols;                 // From the current index, find how many columns to move over
+
+        // See what happened
+        printf("Thread %ld: Image[%d][%d]\n", batch->threadID, cell_r, cell_c);
+        printf("Thread %ld: i: %d, startRow: %d, startCol: %d\n", batch->threadID, i, startRow, startCol);
 
         r = cell_r;
         c = cell_c;
