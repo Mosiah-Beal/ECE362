@@ -287,8 +287,8 @@ void *checkForMatchBatch(void *args) {
         int cell_c = (startCol + i) % Cols;                 // From the current index, find how many columns to move over
 
         // See what happened
-        printf("Thread %ld: Image[%d][%d]\n", batch->threadID, cell_r, cell_c);
-        printf("Thread %ld: i: %d, startRow: %d, startCol: %d\n", batch->threadID, i, startRow, startCol);
+        // printf("Thread %ld: Image[%d][%d]\n", batch->threadID, cell_r, cell_c);
+        // printf("Thread %ld: i: %d, startRow: %d, startCol: %d\n", batch->threadID, i, startRow, startCol);
 
         r = cell_r;
         c = cell_c;
@@ -322,7 +322,7 @@ void *checkForMatchBatch(void *args) {
         }
         else {
             // No need to continue, not enough space for a match
-            printf("Image[%d][%d]: Not enough space for a match along the columns\n", cell_r, cell_c);
+            // printf("Image[%d][%d]: Not enough space for a match along the columns\n", cell_r, cell_c);
         }
 
         // Reset the cell coordinates
@@ -357,7 +357,7 @@ void *checkForMatchBatch(void *args) {
         }
         else {
             // No need to continue, not enough space for a match
-            printf("Image[%d][%d]: Not enough space for a match along the rows\n", cell_r, cell_c);
+            // printf("Image[%d][%d]: Not enough space for a match along the rows\n", cell_r, cell_c);
         }
     
         // Done with this cell, move to the next one
