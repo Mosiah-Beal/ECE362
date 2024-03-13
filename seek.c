@@ -60,6 +60,7 @@ void *checkForMatchBatch(void *args);
 void matchBatchWork(int rows, int cols, int threads, int detect_len);
 void makeAnImage(void);
 void *makeAnImageThreads(void *threadData_arg);
+void makeAnImageDeterministic(void);
 int checkArguments(void);
 
 int main(int argc, char *argv[]) {
