@@ -57,7 +57,7 @@ pthread_mutex_t counter_lock;
 void *checkForMatch(void *args);
 void checkMatchWrapper(void);
 void *checkForMatchBatch(void *args);
-void matchBatchWork(int rows, int cols, int threads, int detect_len);
+void matchBatchWork(void);
 void makeAnImage(void);
 void *makeAnImageThreads(void *threadData_arg);
 void makeAnImageDeterministic(void);
@@ -115,7 +115,7 @@ clock_gettime(CLOCK_MONOTONIC, &matchStart);
 
 // Check for matches
 //checkMatchWrapper();
-matchBatchWork(Rows, Cols, Threads, Detect_len);
+matchBatchWork();
 
 clock_gettime(CLOCK_MONOTONIC, &matchEnd);
 
@@ -487,17 +487,17 @@ void *makeAnImageThreads(void *threadData_arg) {
  * @param detect_len
  * 
  */
-void matchBatchWork(int rows, int cols, int threads, int detect_len) {
+void matchBatchWork() {
     // Create the array of threads
-    pthread_t thread[threads];
+    pthread_t thread[Threads];
 
     // Create the thread data
-    batch_t threadData[threads];
+    batch_t threadData[Threads];
 
     // determine how to split the work among the threads
-    int totalWork = rows * cols;
-    int work = totalWork / threads;
-    int remainder = totalWork % threads;
+    int totalWork = Rows * Cols;
+    int work = totalWork / Threads;
+    int remainder = totalWork % Threads;
 
     // tell the user how the work is being split
     printf("Total work: %d\n", totalWork);
@@ -509,14 +509,14 @@ void matchBatchWork(int rows, int cols, int threads, int detect_len) {
     // Create the batch threads
     int rc;
 
-    for(long t=0; t<threads; t++){
+    for(long t=0; t<Threads; t++){
         // Determine the starting coordinates and the amount of work for each thread
         
         // Use the index to determine the starting coordinates
         int startIndex = t * work;
         
-        int startRow = startIndex / cols;
-        int startCol = startIndex % cols;        
+        int startRow = startIndex / Cols;
+        int startCol = startIndex % Cols;        
         
         // Fill in the thread data
         threadData[t].threadID = t;
@@ -524,7 +524,7 @@ void matchBatchWork(int rows, int cols, int threads, int detect_len) {
         threadData[t].startCol = startCol;
 
         // The last thread will do the remainder of the work left over
-        if( t == threads-1 ) {
+        if( t == Threads-1 ) {
             threadData[t].work = work + remainder;
         }
         else {
@@ -541,7 +541,7 @@ void matchBatchWork(int rows, int cols, int threads, int detect_len) {
     }
 
     // Wait for the threads to finish
-    for(long t=0; t<threads; t++){
+    for(long t=0; t<Threads; t++){
         pthread_join(thread[t], NULL);
     }
 
