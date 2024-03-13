@@ -12,28 +12,6 @@
 #define DETECT_LEN      20
 
 
-
-// Make a struct to pass arguments to the image threads
-typedef struct {
-    int startRow;   // Start row in the image for the thread
-    int endRow;     // End row in the image for the thread
-
-    int startCol;   // Start column in the image for the thread
-    int endCol;     // End column in the image for the thread
-
-    long threadID;  // The thread ID
-} ImageData_t;
-
-// Make a struct to pass arguments to the single cell threads
-typedef struct {
-    int row;    // The row of the cell to check
-    int col;    // The column of the cell to check
-    int first_call;     // The first call to this thread
-    int busy;           // The thread is busy
-
-    long threadID;  // The thread ID
-} match_t;
-
 // Make a struct to pass arguments to the batch threads
 typedef struct {
     int startRow;   // Start row in the image
@@ -55,14 +33,9 @@ int counter = 0;
 pthread_mutex_t counter_lock;
 
 
-void *checkForMatch(void *args);
-void checkMatchWrapper(void);
 void *checkForMatchBatch(void *args);
 void matchBatchWork(void);
-void makeAnImage(void);
-void *makeAnImageThreads(void *threadData_arg);
 void makeAnImageDeterministic(void);
-int checkArguments(void);
 int checkArgumentsExplicit(void);
 
 int main(int argc, char *argv[]) {
@@ -76,7 +49,7 @@ int main(int argc, char *argv[]) {
         else if (strcmp(argv[0], "-c" ) == 0 ) Cols = atoi(argv[1]);
         else if (strcmp(argv[0], "-l" ) == 0 ) Detect_len = atoi(argv[1]);
         else if (strcmp(argv[0], "-t" ) == 0 ) { Threads = atoi(argv[1]);}
-        else {   printf("\nInvalid Arguments\n"); exit(-1); }
+        else {   fprintf(stderr, "\nInvalid Arguments\n"); exit(-1); }
     }
 
 
@@ -92,8 +65,6 @@ int main(int argc, char *argv[]) {
 
     // Valid arguments were passed to the program
     printf("\nRows: %d, Cols: %d, Detect_len: %d, Threads: %d\n", Rows, Cols, Detect_len, Threads);
-
-    // FIXME: write checks for when the number of threads is greater than the number of rows/cols
 
     // Start image filling timer
     printf("Filling the image with random 1s and 0s.\n");
@@ -145,26 +116,6 @@ int main(int argc, char *argv[]) {
  * @param threads 
  * @return int 
  */
-int checkArguments() {
-    
-    // Find the smallest of rows and cols
-    int minDimension = Rows < Cols ? Rows : Cols;
-    
-    // Check that the dimensions are within the correct range
-    if( Rows > MAX_ROWS || Cols > MAX_COLS || Detect_len > minDimension ) {
-        return -1;
-    }
-
-    // Check that the number of threads is valid
-    if( Threads != 1 && Threads != 2 && Threads != 4 && Threads != 8 && Threads != 16 ) {
-        return -1;
-    }
-
-    // Otherwise, the arguments are valid
-    return 0;
-}
-
-
 int checkArgumentsExplicit() {
     int minDimension = Rows < Cols ? Rows : Cols;
     
@@ -195,226 +146,12 @@ int checkArgumentsExplicit() {
     return 0;
 }
 
-
-void checkMatchWrapper() {
-    // Create the array of threads
-    pthread_t thread[Threads];
-
-    // Create the thread data
-    match_t threadData[Threads];
-
-    // determine how to split the work among the threads
-    int totalWork = Rows * Cols;
-    int work = totalWork / Threads;
-    int remainder = totalWork % Threads;
-
-    // tell the user how the work is being split
-    printf("Total work: %d\n", totalWork);
-    printf("Work per thread: %d\n", work);
-
-    // Create a lock for the results
-    pthread_mutex_init(&counter_lock, NULL);
-
-
-    // Create the threads, send the threads in a circular pattern
-    long t;     // thread index (will be incremented and modulo to loop)
-    int rc;     // return code from pthread_create
-    for(t=0; t<Threads; t++){
-        threadData[t].first_call = 1;   // This will be the first call to the thread
-        threadData[t].busy = 0;         // The thread is not busy
-        threadData[t].threadID = t;
-    }
-
-    // Go through the rows and columns and check for matches
-    for(int row=0; row < Rows; row++) {
-
-        // give the user an update on the progress every 100 rows
-        if( row % 100 == 0 ) {
-            printf("Checking row %d\n", row);
-        }
-
-        for(int col=0; col < Cols; col++) {
-            //t = 0;
-            // Find a thread that is not busy
-            while(1) {
-                if( threadData[t].busy == 0 ) {
-                    // Found a thread that is not busy
-                    break;
-                }
-                // Increment the thread index and loop back to 0 if necessary
-                t = (t+1) % Threads;
-            }
-
-            // Print the thread index
-            printf("Thread index: %ld\n", t);
-
-            // Check if we need to wait for a thread to finish
-            if(threadData[t].first_call == 0) {  
-                pthread_join(thread[t], NULL);
-            }
-            else {
-                threadData[t].first_call = 0;   // This is no longer the first call to the thread
-            }
-
-            // Pack the arguments for the thread
-            threadData[t].row = row;
-            threadData[t].col = col;
-
-            // Send the thread to check for a match
-            threadData[t].busy = 1;         // The thread is now busy
-            rc = pthread_create(&thread[t], NULL, checkForMatch, (void *)&threadData[t]);
-            if (rc){
-                fprintf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
-                exit(-1);
-            }
-
-            // Increment the thread index and loop back to 0 if necessary
-            // t = (t+1) % Threads;
-        }
-    }
-
-
-    // Wait for the threads to finish
-    printf("Waiting for threads to finish.\n");
-
-    // join the threads
-    for(t=0; t<Threads; t++){
-        pthread_join(thread[t], NULL);
-        printf("Thread %ld done.\n", threadData[t].threadID);
-    }
-    printf("All threads have joined.\n");
-
-    // Destroy the lock
-    pthread_mutex_destroy(&counter_lock);
-    
-}
-
-
-void *checkForMatch(void *args) {
-    // unpack the arguments
-    match_t *match = (match_t *)args;
-    int row = match->row;
-    int col = match->col;
-    int r, c, length;
-    
-
-    // check that there is enough space to achieve a match along the columns
-    if( Cols - col >= Detect_len){
-        // check for a match along the columns (Detect_len streak of 1s)
-        for(length=0, c=col; c < Cols; c++){
-            if( Image[row][c] == 1 ) { 
-                // check if streak is long enough
-                if( ++length == Detect_len ) {
-                    // match of specified length found
-
-                    // get a lock before updating the counter
-                    pthread_mutex_lock(&counter_lock);
-                    counter++;
-                    pthread_mutex_unlock(&counter_lock);
-                    
-                    // Match found, no need to continue
-                    break; 
-                }
-            }
-            else { // Image[row][c] == 0
-                // Streak broken, no need to continue
-                break;
-            }
-        }
-    }
-
-    // check that there is enough space to achieve a match along the rows
-    if( Rows - row >= Detect_len){
-        // check for a match along the rows (Detect_len streak of 1s)
-        for(length=0, r=row; r < Rows; r++) {
-            if( Image[r][col] == 1 ) {
-                // check if streak is long enough
-                if( ++length == Detect_len ) { 
-                    // match of specified length found
-
-                    // get a lock before updating the counter
-                    pthread_mutex_lock(&counter_lock);
-                    counter++;
-                    pthread_mutex_unlock(&counter_lock);
-                    
-                    // Match found, no need to continue
-                    break; 
-                }
-            }
-            else { // Image[r][col] == 0
-                // Streak broken, no need to continue
-                break;
-            }
-        }
-    }
-
-    // The thread is done
-    //printf("Thread %ld done.\n", match->threadID);
-    match->busy = 0;    // The thread is not busy anymore
-}
-
-
 /**
- * @brief Split the work of creating the image among the threads
+ * @brief makeAnImage
  * 
- * @param rows 
- * @param cols 
- * @param threads 
+ * @note Fill the image with random 1s and 0s
+ * 
  */
-void makeAnImage() {
-      // Determine the size of the image and the work for each thread
-    // For simplicity, just distribute the work along either the rows
-    int work = Rows / Threads;
-    int remainder = Rows % Threads;
-    long t;
-
-    // Create the array of threads
-    pthread_t thread[Threads];
-
-    // Create the thread data
-    ImageData_t threadData[Threads];
-
-    // Initialize the thread data
-    for(t=0; t<Threads; t++) {
-        threadData[t].threadID = t;
-
-        // Determine the start and end rows for each thread
-        if( t<Threads-1 ) {
-            threadData[t].startRow = t * work;
-            threadData[t].endRow = threadData[t].startRow + work;
-        }
-        // The last thread will do the remainder of the work left over
-        else {
-            threadData[t].startRow = t * work;
-            threadData[t].endRow = threadData[t].startRow + work + remainder;
-        }
-
-       // For simplicity, each thread will do all the columns
-        threadData[t].startCol = 0;
-        threadData[t].endCol = Cols;
-
-    }
-
-    // Create the threads
-    int rc;
-    for(t=0; t<Threads; t++){
-        rc = pthread_create(&thread[t], NULL, makeAnImageThreads, (void *)&threadData[t]);
-        if (rc){
-            fprintf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
-    // Wait for the threads to finish
-    for(t=0; t<Threads; t++){
-        pthread_join(thread[t], NULL);
-    }
-
-    // The image has been created
-    printf("The image has been created.\n");
-}
-
-
 void makeAnImageDeterministic() {
     // Fill the image with 1s and 0s
     for(int r=0; r<Rows; r++) {
@@ -423,94 +160,6 @@ void makeAnImageDeterministic() {
         }
     }
 }
-
-/**
- * @brief Fill in the specified rows and columns of the image with random 1s and 0s
- * 
- * @param threadData 
- * @return void* 
- */
-void *makeAnImageThreads(void *threadData_arg) {
-    
-    // Cast the void pointer to a ImageData_t pointer
-    ImageData_t *threadData = (ImageData_t *)threadData_arg;
-    
-    // Indexing variables
-    int r, c;
-    
-    // Loop through the rows for this thread
-    for(r=threadData->startRow; r<threadData->endRow; r++) {
-        // Loop through the columns for this thread
-        for(c=threadData->startCol; c<threadData->endCol; c++) {
-            // Fill the image with random 1s and 0s
-            Image[r][c] = rand() % 2;
-        }
-    }
-    
-    // Exit the thread
-    printf("Thread %ld done.\n", threadData->threadID);
-    pthread_exit(NULL);
-}
-
-
-/*
-
-    // Thankfully, since we are just reading the image, we don't need to worry
-    // about threads fighting over the same memory location. We can just have
-    // each thread fill in its own part of the image.
-
-    // Since rows and scanlines are independent, we can have each thread work on their own
-    // row/column. The question is how to divide the work among the threads.
-
-    // One method is to give each thread a cell in the image to work on. This is the simplest
-    // method, but we could try to split each cell into the vertical and horizontal components
-
-    // Lets start by giving each thread a cell.
-
-
-
-    // (2x2 image)
-    |1 1|
-    |1 1|
-
-    // (4x4 image)
-    |1 1 1 1|
-    |1 1 1 1|
-    |1 1 1 1|
-    |1 1 1 1|
-
-    // (8x8 image)                  // len = 2
-    |1 1 1 1 1 1 1 1|               |x 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1|               |1 1 1 1 1 1 1 1|
-
-    // (16x16 image)
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    |1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1|
-    
-
-
-*/
-
 
 /**
  * @brief matchBatchWork
