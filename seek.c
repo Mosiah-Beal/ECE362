@@ -534,7 +534,7 @@ void matchBatchWork(int rows, int cols, int threads, int detect_len) {
         // Create the threads
         rc = pthread_create(&thread[t], NULL, checkForMatchBatch, (void *)&threadData[t]);
         if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            printf(stderr, "ERROR; return code from pthread_create() is %d\n", rc);
             exit(-1);
         }
 
