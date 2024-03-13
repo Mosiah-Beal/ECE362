@@ -63,6 +63,7 @@ void makeAnImage(void);
 void *makeAnImageThreads(void *threadData_arg);
 void makeAnImageDeterministic(void);
 int checkArguments(void);
+int checkArgumentsExplicit(void);
 
 int main(int argc, char *argv[]) {
     int found =0;
@@ -83,8 +84,8 @@ int main(int argc, char *argv[]) {
     // Rows and Cols must be less than MAX_ROWS and MAX_COLS
     // Detect_len must be less than or equal to the smaller of Rows and Cols
     // Threads must be 1, 2, 4, 8, or 16
-    if( checkArguments() == -1 ) {
-        printf("\nInvalid Arguments\n");
+    if( checkArgumentsExplicit() == -1 ) {
+        //printf("\nInvalid Arguments\n");
         exit(-1);
     }
 
@@ -97,32 +98,32 @@ int main(int argc, char *argv[]) {
     // Start image filling timer
     printf("Filling the image with random 1s and 0s.\n");
     struct timespec imageStart, imageEnd;
-clock_gettime(CLOCK_MONOTONIC, &imageStart);
+    clock_gettime(CLOCK_MONOTONIC, &imageStart);
 
-// Fill the image with random 1s and 0s
-//makeAnImage();
-makeAnImageDeterministic();
+    // Fill the image with random 1s and 0s
+    //makeAnImage();
+    makeAnImageDeterministic();
 
-clock_gettime(CLOCK_MONOTONIC, &imageEnd);
+    clock_gettime(CLOCK_MONOTONIC, &imageEnd);
 
-// Calculate and print the time difference in milliseconds
-long imageTime = (imageEnd.tv_sec - imageStart.tv_sec) * 1000 + (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;
-printf("The image has been filled. It took %ld milliseconds.\n", imageTime);
+    // Calculate and print the time difference in milliseconds
+    long imageTime = (imageEnd.tv_sec - imageStart.tv_sec) * 1000 + (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;
+    printf("The image has been filled. It took %ld milliseconds.\n", imageTime);
 
-// Start checking for matches timer
-printf("Checking for matches.\n");
-struct timespec matchStart, matchEnd;
-clock_gettime(CLOCK_MONOTONIC, &matchStart);
+    // Start checking for matches timer
+    printf("Checking for matches.\n");
+    struct timespec matchStart, matchEnd;
+    clock_gettime(CLOCK_MONOTONIC, &matchStart);
 
-// Check for matches
-//checkMatchWrapper();
-matchBatchWork();
+    // Check for matches
+    //checkMatchWrapper();
+    matchBatchWork();
 
-clock_gettime(CLOCK_MONOTONIC, &matchEnd);
+    clock_gettime(CLOCK_MONOTONIC, &matchEnd);
 
-// Calculate and print the time difference in milliseconds
-long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
-printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
+    // Calculate and print the time difference in milliseconds
+    long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+    printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
 
     return 0;
 }
@@ -162,6 +163,38 @@ int checkArguments() {
     // Otherwise, the arguments are valid
     return 0;
 }
+
+
+int checkArgumentsExplicit() {
+    int minDimension = Rows < Cols ? Rows : Cols;
+    
+    // Check that the dimensions are within the correct range
+    if(Rows > MAX_ROWS) {
+        printf("Rows is greater than MAX_ROWS: %d\n", MAX_ROWS);
+        return -1;
+    }
+
+    if(Cols > MAX_COLS) {
+        printf("Cols is greater than MAX_COLS: %d\n", MAX_COLS);
+        return -1;
+    }
+
+    if(Detect_len > minDimension) {
+        printf("Detect_len is greater than the minimum dimension: %d\n", minDimension);
+        return -1;
+    }
+    
+    
+    // Check that the number of threads is valid
+    if( Threads != 1 && Threads != 2 && Threads != 4 && Threads != 8 && Threads != 16 ) {
+        printf("Threads is not 1, 2, 4, 8, or 16: %d\n", Threads);
+        return -1;
+    }
+
+    // Otherwise, the arguments are valid
+    return 0;
+}
+
 
 void checkMatchWrapper() {
     // Create the array of threads
@@ -640,3 +673,4 @@ void *checkForMatchBatch(void *args) {
     pthread_exit(NULL);
 
 }
+
