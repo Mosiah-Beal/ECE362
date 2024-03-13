@@ -364,7 +364,7 @@ void *checkForMatchBatch(void *args) {
     }
 
     // The thread is done with its work
-    printf("Thread %ld done.\n", batch->threadID);
+    // printf("Thread %ld done.\n", batch->threadID);
     pthread_exit(NULL);
 
 }
