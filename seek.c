@@ -635,7 +635,7 @@ void *checkForMatchBatch(void *args) {
         
         // get the cell coordinates from the index, since we may not start at the beginning of the row
         r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
-        c = startCol + (i % Cols);                  // From the current index, find how many columns to move over
+        c = startCol + ((i + startCol) % Cols);                  // From the current index, find how many columns to move over
 
         // check that there is enough space to achieve a match along the columns
         if( Cols - c >= Detect_len){
