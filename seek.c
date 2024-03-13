@@ -529,13 +529,21 @@ void matchBatchWork() {
 
     // tell the user how the work is being split
     printf("Total work: %d\n", totalWork);
-    printf("Work per thread: %d\n", work);
+    //printf("Work per thread: %d\n", work);
     
     // If the work is less than the number of threads, just use the first work threads
     if( totalWork < Threads ) {
         Threads = totalWork;
         work = 1;
         remainder = 0;
+
+        // Array is small enough to be printed
+        for(int r=0; r<Rows; r++) {
+            for(int c=0; c<Cols; c++) {
+                printf("%d ", Image[r][c]);
+            }
+            printf("\n");
+        }
     }
 
     // Say how the work is being split
