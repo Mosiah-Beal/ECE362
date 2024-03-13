@@ -39,8 +39,6 @@ void makeAnImageDeterministic(void);
 int checkArgumentsExplicit(void);
 
 int main(int argc, char *argv[]) {
-    int found =0;
-    int row, col;
 
     // Process command line arguments
     for( argc--, argv++; argc > 0; argc-=2, argv+=2  ) {
@@ -58,7 +56,7 @@ int main(int argc, char *argv[]) {
     // Detect_len must be less than or equal to the smaller of Rows and Cols
     // Threads must be 1, 2, 4, 8, or 16
     if( checkArgumentsExplicit() == -1 ) {
-        //printf("\nInvalid Arguments\n");
+        fprintf(stderr, "Invalid parameters chosen\n");
         exit(-1);
     }
 
@@ -66,39 +64,35 @@ int main(int argc, char *argv[]) {
     // Valid arguments were passed to the program
     printf("\nRows: %d, Cols: %d, Detect_len: %d, Threads: %d\n", Rows, Cols, Detect_len, Threads);
 
+    // Time the image filling and matching
+    struct timespec imageStart, imageEnd, matchStart, matchEnd;
+
     // Start image filling timer
     printf("Filling the image with random 1s and 0s.\n");
-    struct timespec imageStart, imageEnd;
-    clock_gettime(CLOCK_MONOTONIC, &imageStart);
 
     // Fill the image with random 1s and 0s
-    //makeAnImage();
-    makeAnImageDeterministic();
-
-    clock_gettime(CLOCK_MONOTONIC, &imageEnd);
+    clock_gettime(CLOCK_MONOTONIC, &imageStart);    // Start the timer
+    makeAnImageDeterministic();                     // Fill the image randomly (deterministic order for testing purposes)
+    clock_gettime(CLOCK_MONOTONIC, &imageEnd);      // End the timer
 
     // Calculate and print the time difference in milliseconds
-    long imageTime = (imageEnd.tv_sec - imageStart.tv_sec) * 1000 + (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;
-    printf("The image has been filled. It took %ld milliseconds.\n", imageTime);
+    long ImageSeconds = imageEnd.tv_sec - imageStart.tv_sec;
+    long ImageMilliseconds = (imageEnd.tv_nsec - imageStart.tv_nsec) / 1000000;    
+    printf("The image has been filled. It took %ld.%03ld seconds.\n", ImageSeconds, ImageMilliseconds);
+
 
     // Start checking for matches timer
     printf("Checking for matches.\n");
-    struct timespec matchStart, matchEnd;
-    clock_gettime(CLOCK_MONOTONIC, &matchStart);
-
+    
     // Check for matches
-    //checkMatchWrapper();
-    matchBatchWork();
-    clock_gettime(CLOCK_MONOTONIC, &matchEnd);
+    clock_gettime(CLOCK_MONOTONIC, &matchStart);    // Start the timer
+    matchBatchWork();                               // Use threads to check for sequences of 1s in the image
+    clock_gettime(CLOCK_MONOTONIC, &matchEnd);      // End the timer
 
     // Calculate and print the time difference in milliseconds
-    long seconds = matchEnd.tv_sec - matchStart.tv_sec;
-    long milliseconds = (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
-
-    // long matchTime = (matchEnd.tv_sec - matchStart.tv_sec) * 1000 + (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
-    // printf("There were %d matches found. It took %ld milliseconds.\n", counter, matchTime);
-
-    printf("There were %d matches found. It took %ld.%03ld seconds.\n", counter, seconds, milliseconds);
+    long MatchSeconds = matchEnd.tv_sec - matchStart.tv_sec;
+    long MatchMilliseconds = (matchEnd.tv_nsec - matchStart.tv_nsec) / 1000000;
+    printf("There were %d matches found. It took %ld.%03ld seconds.\n", counter, MatchSeconds, MatchMilliseconds);
 
     return 0;
 }
@@ -108,17 +102,14 @@ int main(int argc, char *argv[]) {
  * @brief Check that the arguments passed to the program are valid
  *
  *
- * @note The arguments are valid if:
+ * @note Looks at the global variables Rows, Cols, Detect_len, and Threads
+ * which are set by the command line arguments.
+ * The arguments are valid if:
  *  - Rows and Cols are less than MAX_ROWS and MAX_COLS
  *  - Detect_len is less than or equal to the smaller of Rows and Cols
  *  - Threads is 1, 2, 4, 8, or 16
- *  - Valid arguments return 0, otherwise -1
- * 
- * @param rows 
- * @param cols 
- * @param detect_len 
- * @param threads 
- * @return int 
+ * @return Valid arguments return 0, otherwise -1
+ *  
  */
 int checkArgumentsExplicit() {
     int minDimension = Rows < Cols ? Rows : Cols;
@@ -151,9 +142,12 @@ int checkArgumentsExplicit() {
 }
 
 /**
- * @brief makeAnImage
+ * @brief makeAnImage - Fill the image with random 1s and 0s
  * 
- * @note Fill the image with random 1s and 0s
+ * @note Although the image is filled with random 1s and 0s, the order
+ * in which the image is filled is deterministic. This is for testing purposes.
+ * so that the same image can be used to test the program multiple times.
+ * (use a different seed for the random number generator to get a different image)
  * 
  */
 void makeAnImageDeterministic() {
@@ -166,12 +160,13 @@ void makeAnImageDeterministic() {
 }
 
 /**
- * @brief matchBatchWork
- * 
- * @param rows
- * @param cols
- * @param threads
- * @param detect_len
+ * @brief matchBatchWork - Divide the work among the threads and check for matches
+ * This function will divide the work among the threads and call the function
+ * checkForMatchBatch to check for matches. It will then wait for the threads to finish 
+ * before returning.
+ *
+ * @note If the image is small enough (total cells <= 64), it will be printed to the console 
+ * @note If the work is less than the number of threads, it just uses the first work threads
  * 
  */
 void matchBatchWork() {
@@ -179,10 +174,6 @@ void matchBatchWork() {
     int totalWork = Rows * Cols;
     int work = totalWork / Threads;
     int remainder = totalWork % Threads;
-
-    // tell the user how the work is being split
-    //printf("Total work: %d\n", totalWork);
-    //printf("Work per thread: %d\n", work);
     
     // If the work is less than the number of threads, just use the first work threads
     if( totalWork < Threads ) {
@@ -207,21 +198,22 @@ void matchBatchWork() {
         }
     }
 
-    // Say how the work is being split
+    // Inform the user how the work is divided
+    //printf("Total work: %d\n", totalWork);
+    //printf("Threads: %d\n", Threads);
     //printf("Work per thread: %d\n", work);
     //printf("Remainder: %d\n", remainder);
-    //printf("Threads: %d\n", Threads);
+ 
 
     // Create the array of threads
     pthread_t thread[Threads];
 
-    // Create the thread data
+    // Create the array of data to send with the threads
     batch_t threadData[Threads];
-
-
 
     // Create a lock for the results
     pthread_mutex_init(&counter_lock, NULL);
+
 
     // Create the batch threads
     int rc;
