@@ -536,7 +536,10 @@ void matchBatchWork() {
         Threads = totalWork;
         work = 1;
         remainder = 0;
+    }
 
+    // Print the image if it is small enough
+    if(totalWork < 64) {
         // Array is small enough to be printed
         for(int r=0; r<Rows; r++) {
             for(int c=0; c<Cols; c++) {
