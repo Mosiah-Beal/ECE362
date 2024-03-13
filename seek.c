@@ -97,7 +97,8 @@ int main(int argc, char *argv[]) {
     time_t imageStart = time(NULL);
 
     // Fill the image with random 1s and 0s
-    makeAnImage();
+    //makeAnImage();
+    makeAnImageDeterministic();
     time_t imageEnd = time(NULL);
 
     // Calculate and print the time difference
@@ -375,6 +376,15 @@ void makeAnImage() {
 }
 
 
+void makeAnImageDeterministic() {
+    // Fill the image with 1s and 0s
+    for(int r=0; r<Rows; r++) {
+        for(int c=0; c<Cols; c++) {
+            Image[r][c] = rand() % 2;
+        }
+    }
+}
+
 /**
  * @brief Fill in the specified rows and columns of the image with random 1s and 0s
  * 
@@ -562,7 +572,7 @@ void *checkForMatchBatch(void *args) {
     // check for matches in the image
     for(int i=0; i<work; i++) {
         
-        // get the ending coordinates from the index, since we may not start at the beginning of the row
+        // get the cell coordinates from the index, since we may not start at the beginning of the row
         r = startRow + ((i + startCol) / Cols);     // From the current index, find how many rows to move down
         c = startCol + (i % Cols);                  // From the current index, find how many columns to move over
 
