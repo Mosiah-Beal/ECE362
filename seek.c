@@ -320,7 +320,7 @@ void *checkForMatchBatch(void *args) {
                         
                         // Match found, no need to continue checking the columns
                         // Done with this cell, move to the next one
-                        printf("Horizontal match found at Image[%d][%d]\n", cell_r, cell_c);
+                        // printf("Horizontal match found at Image[%d][%d]\n", cell_r, cell_c);
                         break; 
                     }
                 }
@@ -355,7 +355,7 @@ void *checkForMatchBatch(void *args) {
                         
                         // Match found, no need to continue checking the rows
                         // Done with this cell, move to the next one
-                        printf("Vertical match found at Image[%d][%d]\n", cell_r, cell_c);
+                        // printf("Vertical match found at Image[%d][%d]\n", cell_r, cell_c);
                         break; 
                     }
                 }
